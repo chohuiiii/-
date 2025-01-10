@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가위 바위 보 게임</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;  /* 가로 중앙 정렬 */
+            align-items: center;      /* 세로 중앙 정렬 */
+            height: 100vh;            /* 화면 전체 높이 */
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        .game-container {
+            text-align: center;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 300px;
+            display: flex;
+            flex-direction: column;  /* 세로로 나열되도록 설정 */
+            justify-content: center; /* 컨텐츠를 세로로 중앙 정렬 */
+            align-items: center;     /* 가로로 중앙 정렬 */
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .buttons button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        .buttons button:hover {
+            background-color: #e0e0e0;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #computer-choice {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="number"] {
+            font-size: 16px;
+            padding: 5px;
+            width: 100px;
+            margin: 10px;
+        }
+
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* 게임 결과 카운트 부분 가로 정렬 */
+        .result-counts {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .result-counts p {
+            margin: 0 15px; /* 각 항목 사이에 여백 추가 */
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* 자금, 베팅 금액 입력 등 가운데 정렬 */
+        #money-display, #bet-amount, #start-game {
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>가위 바위 보 게임</h1>
+        
+        <!-- 초기 자금 입력 -->
+        <label for="bet-amount">초기 자금 입력 (베팅 금액): </label>
+        <input type="number" id="bet-amount" min="1" step="1" placeholder="금액 입력">
+        
+        <!-- 게임 시작 버튼 -->
+        <button id="start-game">게임 시작</button>
+        
+        <div class="buttons">
+            <button id="scissors-btn">가위</button>
+            <button id="rock-btn">바위</button>
+            <button id="paper-btn">보</button>
+        </div>
+
+        <p>컴퓨터의 선택: <span id="computer-choice"></span></p>
+        <p id="result"></p>
+
+        <!-- 자금 표시 -->
+        <p id="money-display">자금: 0 원</p>
+
+        <!-- 게임 결과 카운트 -->
+        <div class="result-counts">
+            <p>이긴 횟수: <span id="win-count">0</span></p>
+            <p>진 횟수: <span id="lose-count">0</span></p>
+            <p>비긴 횟수: <span id="draw-count">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        // 버튼 요소 가져오기
+        const scissorsButton = document.getElementById("scissors-btn");
+        const rockButton = document.getElementById("rock-btn");
+        const paperButton = document.getElementById("paper-btn");
+        const betAmountInput = document.getElementById("bet-amount");
+        const startGameButton = document.getElementById("start-game");
+
+        // 결과 표시 요소 가져오기
+        const computerChoiceElement = document.getElementById("computer-choice");
+        const resultElement = document.getElementById("result");
+        const moneyDisplay = document.getElementById("money-display");
+
+        // 게임 결과 카운트 요소 가져오기
+        const winCountElement = document.getElementById("win-count");
+        const loseCountElement = document.getElementById("lose-count");
+        const drawCountElement = document.getElementById("draw-count");
+
+        let money = 0; // 초기 자금 설정
+        let gameStarted = false;
+
+        // 게임 결과 카운트
+        let winCount = 0;
+        let loseCount = 0;
+        let drawCount = 0;
+
+        // 컴퓨터의 선택을 랜덤으로 생성하는 함수
+        function getComputerChoice() {
+            const choices = ["가위", "바위", "보"];
+            const randomIndex = Math.floor(Math.random() * choices.length);
+            return choices[randomIndex];
+        }
+
+        // 승패 결정 함수
+        function determineWinner(userChoice, computerChoice) {
+            if (userChoice === computerChoice) {
+                return "무승부";
+            }
+
+            if (
+                (userChoice === "가위" && computerChoice === "보") ||
+                (userChoice === "바위" && computerChoice === "가위") ||
+                (userChoice === "보" && computerChoice === "바위")
+            ) {
+                return "승리!";
+            } else {
+                return "패배!";
+            }
+        }
+
+        // 게임 시작 함수
+        function startGame() {
+            const initialMoney = parseInt(betAmountInput.value, 10);
+
+            // 초기 자금 입력 값 확인
+            if (isNaN(initialMoney) || initialMoney <= 0) {
+                alert("올바른 금액을 입력해주세요 (0보다 큰 숫자).");
+            } else {
+                money = initialMoney; // 게임 시작 시 입력한 금액을 자금으로 설정
+                moneyDisplay.textContent = `${money} 원`;  // 자금 표시 업데이트
+                gameStarted = true;
+                betAmountInput.disabled = true;  // 베팅 금액 설정 후 입력 필드 비활성화
+                startGameButton.disabled = true; // 게임 시작 버튼 비활성화
+            }
+        }
+
+        // 베팅 로직 함수
+        function playGame(userChoice) {
+            if (!gameStarted) {
+                alert("먼저 게임을 시작해주세요.");
+                return;
+            }
+
+            const betAmount = parseInt(betAmountInput.value, 10);
+
+            // 베팅 금액 유효성 검사
+            if (isNaN(betAmount) || betAmount <= 0 || betAmount > money) {
+                alert("잘못된 베팅 금액입니다.");
+                return;
+            }
+
+            // 컴퓨터의 선택을 랜덤으로 결정
+            const computerChoice = getComputerChoice();
+            computerChoiceElement.textContent = computerChoice;
+
+            // 승패 결과 결정
+            const result = determineWinner(userChoice, computerChoice);
+            resultElement.textContent = result;
+
+            // 자금 계산
+            if (result === "승리!") {
+                money += betAmount;  // 승리 시 자금 증가
+                winCount++;  // 이긴 횟수 증가
+            } else if (result === "패배!") {
+                money -= betAmount;  // 패배 시 자금 감소
+                loseCount++;  // 진 횟수 증가
+            } else if (result === "무승부") {
+                drawCount++;  // 비긴 횟수 증가
+            }
+
+            // 자금 업데이트
+            moneyDisplay.textContent = `${money} 원`;
+
+            // 게임 결과 카운트 업데이트
+            winCountElement.textContent = winCount;
+            loseCountElement.textContent = loseCount;
+            drawCountElement.textContent = drawCount;
+
+            // 게임 종료 체크
+            if (money <= 0) {
+                alert("자금이 부족합니다. 게임을 종료합니다.");
+                location.reload();  // 페이지 새로고침
+            }
+        }
+
+        // 이벤트 리스너 등록
+        startGameButton.addEventListener("click", startGame);
+        scissorsButton.addEventListener("click", () => playGame("가위"));
+        rockButton.addEventListener("click", () => playGame("바위"));
+        paperButton.addEventListener("click", () => playGame("보"));
+    </script>
+</body>
+</html>
